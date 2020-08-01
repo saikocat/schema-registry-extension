@@ -15,6 +15,8 @@ allprojects {
 
     dependencies {
         implementation(kotlin("stdlib-jdk8"))
+
+        testImplementation("org.junit.jupiter:junit-jupiter:${DepVersions.junit}")
     }
 
     configure<com.diffplug.gradle.spotless.SpotlessExtension> {
@@ -39,6 +41,11 @@ allprojects {
         kotlinOptions {
             jvmTarget = JavaVersion.VERSION_1_8.toString()
             freeCompilerArgs = listOf("-Xjsr305=strict")
+            javaParameters = true
         }
+    }
+
+    tasks.withType<Test> {
+        useJUnitPlatform()
     }
 }
