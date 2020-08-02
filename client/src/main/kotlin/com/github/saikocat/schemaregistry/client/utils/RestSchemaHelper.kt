@@ -13,9 +13,12 @@
  */
 package com.github.saikocat.schemaregistry.client.utils
 
+import io.confluent.kafka.schemaregistry.ParsedSchema
+import io.confluent.kafka.schemaregistry.SchemaProvider
 import io.confluent.kafka.schemaregistry.client.rest.entities.Schema
 import io.confluent.kafka.schemaregistry.client.rest.entities.SchemaString
 import io.confluent.kafka.schemaregistry.utils.JacksonMapper
+import java.util.Optional
 
 /**
  * RestSchemaHelper provides conversions for REST json string into Schema and SchemaString entities
@@ -23,7 +26,7 @@ import io.confluent.kafka.schemaregistry.utils.JacksonMapper
 object RestSchemaHelper {
     /**
      * parseRestSchema converts REST json response into Schema entities Schema(subject, version, id,
-     * schemaType, references, schema)
+     * schemaType, references, schema).
      */
     fun parseRestSchema(json: String): Schema {
         return JacksonMapper.INSTANCE.readValue(json, Schema::class.java)
@@ -31,7 +34,7 @@ object RestSchemaHelper {
 
     /**
      * toSchemaString converts a Schema into a SchemaString as most provider works on SchemaString
-     * to parse into a ParseSchema
+     * to parse into a ParseSchema.
      */
     fun toSchemaString(restSchema: Schema): SchemaString {
         return SchemaString().apply {
@@ -40,5 +43,23 @@ object RestSchemaHelper {
             references = restSchema.references
             maxId = restSchema.id
         }
+    }
+
+    /** toParsedSchema converts a rest schema into an optional ParsedSchema. */
+    fun toParsedSchema(restSchema: Schema, provider: SchemaProvider): Optional<ParsedSchema> {
+        val schemaString = toSchemaString(restSchema)
+        return toParsedSchema(schemaString, provider)
+    }
+
+    fun toParsedSchema(schemaStringJson: String, provider: SchemaProvider): Optional<ParsedSchema> {
+        val schemaString = SchemaString.fromJson(schemaStringJson)
+        return toParsedSchema(schemaString, provider)
+    }
+
+    fun toParsedSchema(
+        schemaString: SchemaString, provider: SchemaProvider
+    ): Optional<ParsedSchema> {
+        // TODO: can throw unknown schemaType with wrong provider
+        return provider.parseSchema(schemaString.getSchemaString(), schemaString.getReferences())
     }
 }
